@@ -15,26 +15,10 @@ ray.init(num_cpus=5)
 # Register the models to use.
 
 # Each policy can have a different configuration (including custom model).
-def gen_policy(i):
-    if bool(os.environ.get("RLLIB_ENABLE_RL_MODULE", False)):
-        # just change the gammas between the two policies.
-        # changing the module is not a critical part of this example.
-        # the important part is that the policies are different.
-        config = {
-            "gamma": random.choice([0.95, 0.99]),
-        }
-    else:
-        config = PPOConfig.overrides(
-            # model={
-            #     "custom_model": "model1",
-            # },
-            gamma=random.choice([0.95, 0.99]),
-        )
-    return PolicySpec(config=config)
-
-
+temp_env = CustomRl3()
+pol = PolicySpec()
 # Setup PPO with an ensemble of `num_policies` different policies.
-policies = {"policy_{}".format(i): gen_policy(i) for i in range(3)}
+policies = {"policy_{}".format(i): pol for i in range(1)}
 policy_ids = list(policies.keys())
 
 
@@ -42,27 +26,12 @@ def policy_mapping_fn(agent_id, episode, worker, **kwargs):
     pol_id = random.choice(policy_ids)
     return pol_id
 
-MODEL_DEFAULTS["fcnet_hiddens"] = [4,4]
-
-# config = (
-#     PPOConfig()
-#     .environment(CustomRl3)
-#     .framework("torch")
-#     .training(num_sgd_iter=5)
-#     .multi_agent(policies=policies, policy_mapping_fn=policy_mapping_fn)
-#     .resources(num_gpus=int(os.environ.get("RLLIB_NUM_GPUS", "0"))).overrides(model=MODEL_DEFAULTS)
-#
-# )
-
-# stop = {
-#     #  "episode_reward_mean": args.stop_reward,
-#     "timesteps_total": args.stop_timesteps,
-#     "training_iteration": args.stop_iters,
-# }
+MODEL_DEFAULTS["fcnet_hiddens"] = [1,1]
 
 
 algo = (
     PPOConfig()
+    .multi_agent(policies=policies, policy_mapping_fn=policy_mapping_fn)
     .rollouts(num_rollout_workers=1)
     .resources(num_gpus=0)
     .environment(env=CustomRl3)
@@ -74,8 +43,8 @@ algo = (
 )
 
 print(algo.get_policy())
-print(algo.get_policy().get_weights())
-print(algo.get_policy().get_weights())
+print(algo)
+print()
 
 ray.shutdown()
 if __name__ == '__main__':

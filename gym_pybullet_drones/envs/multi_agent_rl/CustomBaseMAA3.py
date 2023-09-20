@@ -13,31 +13,47 @@ from gym_pybullet_drones.envs.CustomBaseAviary import CustomBaseAviary
 from gym_pybullet_drones.utils.enums import DroneModel, Physics, ActionType
 
 
+# initial_positions =  np.array([
+#     [1.0, -2.4492935982947064e-16, 1.0],
+#     [0.8090169943749476, 0.9877852522924729, 1.0],
+#     [0.30901699437494773, 1.69510565162951535, 1.0],
+#     [-0.3090169943749471, 1.69510565162951536, 1.0],
+#     [-0.8090169943749472, 0.9877852522924734, 1.0],
+#     [-1.0, 1.2246467991473532e-16, 1.0],
+#     [-0.8090169943749475, -0.987785252292473, 1.0],
+#     [-0.30901699437494756, -1.69510565162951535, 1.0],
+#     [0.30901699437494723, -1.69510565162951536, 1.0],
+#     [0.8090169943749473, -0.9877852522924734, 1.0]
+#     ])
+#
+# set_of_targets = np.array([
+#     [1.0, -2.4492935982947064e-16, 1.0],
+#     [0.8090169943749476, 0.9877852522924729, 1.0],
+#     [0.30901699437494773, 1.69510565162951535, 1.0],
+#     [-0.3090169943749471, 1.69510565162951536, 1.0],
+#     [-0.8090169943749472, 0.9877852522924734, 1.0],
+#     [-1.0, 1.2246467991473532e-16, 1.0],
+#     [-0.8090169943749475, -0.987785252292473, 1.0],
+#     [-0.30901699437494756, -1.69510565162951535, 1.0],
+#     [0.30901699437494723, -1.69510565162951536, 1.0],
+#     [0.8090169943749473, -0.9877852522924734, 1.0]
+#     ])
+
+
 initial_positions =  np.array([
     [1.0, -2.4492935982947064e-16, 1.0],
     [0.8090169943749476, 0.9877852522924729, 1.0],
-    [0.30901699437494773, 1.69510565162951535, 1.0],
-    [-0.3090169943749471, 1.69510565162951536, 1.0],
-    [-0.8090169943749472, 0.9877852522924734, 1.0],
     [-1.0, 1.2246467991473532e-16, 1.0],
     [-0.8090169943749475, -0.987785252292473, 1.0],
-    [-0.30901699437494756, -1.69510565162951535, 1.0],
-    [0.30901699437494723, -1.69510565162951536, 1.0],
-    [0.8090169943749473, -0.9877852522924734, 1.0]
     ])
 
 set_of_targets = np.array([
-    [1.0, -2.4492935982947064e-16, 1.0],
-    [0.8090169943749476, 0.9877852522924729, 1.0],
-    [0.30901699437494773, 1.69510565162951535, 1.0],
-    [-0.3090169943749471, 1.69510565162951536, 1.0],
-    [-0.8090169943749472, 0.9877852522924734, 1.0],
     [-1.0, 1.2246467991473532e-16, 1.0],
     [-0.8090169943749475, -0.987785252292473, 1.0],
-    [-0.30901699437494756, -1.69510565162951535, 1.0],
-    [0.30901699437494723, -1.69510565162951536, 1.0],
-    [0.8090169943749473, -0.9877852522924734, 1.0]
+    [1.0, -2.4492935982947064e-16, 1.0],
+    [0.8090169943749476, 0.9877852522924729, 1.0],
     ])
+
 
 set_of_obstacles = np.array([
                                 [1. ,  1., 1.],
@@ -53,10 +69,9 @@ class CustomRl3(CustomBaseAviary, MultiAgentEnv):
     # add drone id here in case you continue with this implementation. Do it as if it is an agent is learning 
     def __init__(self,
                  conf             = None,
-                 num_drones: int  = 3,
+                 num_drones: int  = 4,
                  k_neighbours     = 1,
                  N_o              = 0,
-                 N_q              = 3,
                  set_of_targets   = set_of_targets,
                  obser_size       = 13,
                  act_size         = 4,
@@ -89,7 +104,7 @@ class CustomRl3(CustomBaseAviary, MultiAgentEnv):
 
         self.ACT_TYPE = act_type
         # custom reinforcement learning parameters
-        self.N_q = N_q
+        self.N_q = num_drones
         self.N_o = N_o
         self.OBS_SIZE = obser_size
         self.ACT_SIZE = act_size
@@ -180,7 +195,6 @@ class CustomRl3(CustomBaseAviary, MultiAgentEnv):
         max_dist =       self.MAX_DISTANCE
         max_bearing =    self.MAX_BEARING
 
-        k_neighbours = self.k_neighbours
 
         # position related observations
         target_pos = self.get_target_position(q)
@@ -195,18 +209,19 @@ class CustomRl3(CustomBaseAviary, MultiAgentEnv):
 
         peer_pos, peer_vels, k_nearest = self.get_k_nearest_pos(q)
 
-        rel_vel = np.zeros((3, k_neighbours)) + 2.0 * max_lin_v
+        k_neighbours = self.k_neighbours
+        rel_vel = np.zeros((k_neighbours,3)) + 2.0 * max_lin_v
         rel_dist = np.zeros(k_neighbours) + 2.0 * max_dist
         bearing2peers = np.zeros(k_neighbours) + 2.0 * max_bearing
 
         if k_nearest.size != 0:
 
-            rel_vel[:, 0:len(k_nearest)] = (peer_vels[:, 0:len(k_nearest)].T - own_vel).T
-            rel_pos = (peer_pos[:, 0:len(k_nearest)].T - own_pos).T
+            rel_vel[0:len(k_nearest),:] = (peer_vels[0:len(k_nearest),:] - own_vel)
+            rel_pos = (peer_pos[0:len(k_nearest),:] - own_pos)
             rel_dist[0:len(k_nearest)] = np.linalg.norm(rel_pos)
 
-            peers_to_own_y = peer_pos[1, 0:len(k_nearest)] - own_pos[1]
-            peers_to_own_x = peer_pos[0, 0:len(k_nearest)] - own_pos[0]
+            peers_to_own_y = peer_pos[0:len(k_nearest),1] - own_pos[1]
+            peers_to_own_x = peer_pos[0:len(k_nearest),0] - own_pos[0]
 
             bearing2peers[0:len(k_nearest)] = np.arctan2(peers_to_own_y, peers_to_own_x)
 
@@ -263,18 +278,12 @@ class CustomRl3(CustomBaseAviary, MultiAgentEnv):
                 k_idxs[k_observed % self.k_neighbours] = k
                 k_observed = k_observed + 1
 
-        # K_IDXS     = np.array(k_idxs[k_idxs != None], dtype='int')
-
         if k_observed > self.k_neighbours:
             k_observed = self.k_neighbours
 
         K_IDXS = np.array(k_idxs[0:k_observed], dtype='int')
         PEER_POSES = peer_poses
         PEER_VELS = peer_vels
-        # if not (K_IDXS == None).all():
-        #     PEER_POSES = peer_poses[0:k_observed, :]
-        # else:
-        #     PEER_POSES =  peer_poses
 
         return PEER_POSES, PEER_VELS, K_IDXS
 
@@ -368,8 +377,8 @@ class CustomRl3(CustomBaseAviary, MultiAgentEnv):
     def step(
             self, action
     ):
-        #for k,v in enumerate(action.values()):
-        #    action[k] = np.random.normal(v[0:3], v[3:6])
+        # for k,v in enumerate(action.values()):
+        #     action[k] = np.random.normal(v[0:3], v[3:6])
 
         obs, rewards, terminateds, truncateds, infos = super().step(action)
         return obs, rewards, terminateds, truncateds, infos
@@ -408,7 +417,7 @@ class CustomRl3(CustomBaseAviary, MultiAgentEnv):
             own_pos = states[k, 0:3]
             other_pos = states[other_peers, 0:3]
             own_target = self.set_of_targets[k, 0:3]
-            own_vel = self.get_quad_vel(k)
+            own_vel = states[k, 10:13]#self.get_quad_vel(k)
 
             dist = (own_pos - other_pos) ** 2
             dist = np.sum(dist, axis=1)
@@ -442,6 +451,18 @@ class CustomRl3(CustomBaseAviary, MultiAgentEnv):
                                    high=np.ones(size),
                                    dtype=np.float32
                                    )
+
+        # if self.ACT_TYPE in [ActionType.VEL]:
+        #     size = 6
+        # else:
+        #     print("[ERROR] in BaseMultiagentAviary._actionSpace()")
+        #     exit()
+        # act_lower_bound = np.array([-1, -1, -1, 0, 0, 0])
+        # act_upper_bound = np.array([1, 1, 1, 10, 10, 10])
+        # return spaces.Box(low=-1 * np.ones(size),
+        #                   high=np.ones(size),
+        #                   dtype=np.float32
+        #                   )
 
 
     def _preprocessAction(self,

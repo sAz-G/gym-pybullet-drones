@@ -45,7 +45,7 @@ parser.add_argument(
     "--stop-iters", type=int, default=200, help="Number of iterations to train." # was 200
 )
 parser.add_argument(
-    "--stop-timesteps", type=int, default=100000, help="Number of timesteps to train." # was 100000
+    "--stop-timesteps", type=int, default=1000000, help="Number of timesteps to train." # was 100000
 )
 parser.add_argument(
     "--stop-reward", type=float, default=150.0, help="Reward at which we stop training."
@@ -58,27 +58,11 @@ if __name__ == "__main__":
 
     # Register the models to use.
 
-    # Each policy can have a different configuration (including custom model).
-    def gen_policy(i):
 
-        if bool(os.environ.get("RLLIB_ENABLE_RL_MODULE", False)):
-            # just change the gammas between the two policies.
-            # changing the module is not a critical part of this example.
-            # the important part is that the policies are different.
-            config = {
-                "gamma": random.choice([0.95, 0.99]),
-            }
-        else:
-            config = PPOConfig.overrides(
-                # model={
-                #     "custom_model": "model1",
-                # },
-                gamma=random.choice([0.95, 0.99]),
-            )
-        return PolicySpec(config=config)
-
+    temp_env = CustomRl3()
+    pol = PolicySpec(observation_space=temp_env._observationSpace(),action_space=temp_env._actionSpace())
     # Setup PPO with an ensemble of `num_policies` different policies.
-    policies = {"policy_{}".format(i): gen_policy(i) for i in range(args.num_policies)}
+    policies = {"policy_{}".format(i): pol for i in range(args.num_policies)}
     policy_ids = list(policies.keys())
 
 
@@ -90,7 +74,7 @@ if __name__ == "__main__":
         PPOConfig()
         .environment(CustomRl3)
         .framework(args.framework)
-        .training(num_sgd_iter=5)
+        .training(num_sgd_iter=20)
         .multi_agent(policies=policies, policy_mapping_fn=policy_mapping_fn)
         .resources(num_gpus=int(os.environ.get("RLLIB_NUM_GPUS", "0")))
 
