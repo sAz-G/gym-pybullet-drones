@@ -261,9 +261,9 @@ class CustomRl3(CustomBaseAviary, MultiAgentEnv):
         max_lin_v = self.MAX_LIN_V
 
         peer_poses = np.zeros(
-            (3, self.k_neighbours)) + 2.0 * max_p_xyz  # 2 is the dummy value in case less than k agents are observed
+            (self.k_neighbours,3)) + 2.0 * max_p_xyz  # 2 is the dummy value in case less than k agents are observed
         peer_vels = np.zeros(
-            (3, self.k_neighbours)) + 2.0 * max_lin_v  # 2 is the dummy value in case less than k agents are observed
+            (self.k_neighbours,3)) + 2.0 * max_lin_v  # 2 is the dummy value in case less than k agents are observed
 
         k_idxs = np.array([None] * self.k_neighbours)  # get idxs of agents, None in case less agents are observed
 
@@ -272,8 +272,8 @@ class CustomRl3(CustomBaseAviary, MultiAgentEnv):
             if k == q:
                 continue
             elif np.linalg.norm(self.get_quad_pos(k) - self.get_quad_pos(q)) <= self.col_radius:
-                peer_poses[:, k_observed % self.k_neighbours] = self.get_quad_pos(k)  # must change the modulo operator
-                peer_vels[:, k_observed % self.k_neighbours] = self.get_quad_vel(k)  # must change the modulo operator
+                peer_poses[k_observed % self.k_neighbours,:] = self.get_quad_pos(k)  # must change the modulo operator
+                peer_vels[k_observed % self.k_neighbours,:] = self.get_quad_vel(k)  # must change the modulo operator
 
                 k_idxs[k_observed % self.k_neighbours] = k
                 k_observed = k_observed + 1
@@ -377,10 +377,11 @@ class CustomRl3(CustomBaseAviary, MultiAgentEnv):
     def step(
             self, action
     ):
-        # for k,v in enumerate(action.values()):
-        #     action[k] = np.random.normal(v[0:3], v[3:6])
+        action_vel ={}
+        for k,v in enumerate(action.values()):
+             action_vel[k] = np.random.normal(v[0:4], v[3:7])
 
-        obs, rewards, terminateds, truncateds, infos = super().step(action)
+        obs, rewards, terminateds, truncateds, infos = super().step(action_vel)
         return obs, rewards, terminateds, truncateds, infos
 
     def _computeTruncated(self):
@@ -440,29 +441,29 @@ class CustomRl3(CustomBaseAviary, MultiAgentEnv):
             A Box of size NUM_DRONES x 4, 3, or 1, depending on the action type.
 
         """
-        if self.ACT_TYPE in [ActionType.VEL]:
-            size = 4
-        else:
-            print("[ERROR] in BaseMultiagentAviary._actionSpace()")
-            exit()
-        act_lower_bound = np.array([-1 * np.ones(size)])
-        act_upper_bound = np.array([+1 * np.ones(size)])
-        return spaces.Box(low=-1 * np.ones(size),
-                                   high=np.ones(size),
-                                   dtype=np.float32
-                                   )
-
         # if self.ACT_TYPE in [ActionType.VEL]:
-        #     size = 6
+        #     size = 4
         # else:
         #     print("[ERROR] in BaseMultiagentAviary._actionSpace()")
         #     exit()
-        # act_lower_bound = np.array([-1, -1, -1, 0, 0, 0])
-        # act_upper_bound = np.array([1, 1, 1, 10, 10, 10])
+        # act_lower_bound = np.array([-1 * np.ones(size)])
+        # act_upper_bound = np.array([+1 * np.ones(size)])
         # return spaces.Box(low=-1 * np.ones(size),
-        #                   high=np.ones(size),
-        #                   dtype=np.float32
-        #                   )
+        #                            high=np.ones(size),
+        #                            dtype=np.float32
+        #                            )
+
+        if self.ACT_TYPE in [ActionType.VEL]:
+            size = 8
+        else:
+            print("[ERROR] in BaseMultiagentAviary._actionSpace()")
+            exit()
+        act_lower_bound = np.array([-1, -1, -1, 0, 0, 0,0])
+        act_upper_bound = np.array([1, 1, 1, 1, 1, 1,1])
+        return spaces.Box(low=act_lower_bound,
+                          high=act_upper_bound,
+                          dtype=np.float32
+                          )
 
 
     def _preprocessAction(self,

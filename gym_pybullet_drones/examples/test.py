@@ -26,7 +26,7 @@ tf1, tf, tfv = try_import_tf()
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument("--num-agents", type=int, default=3)
+parser.add_argument("--num-agents", type=int, default=4)
 parser.add_argument("--num-policies", type=int, default=1)
 parser.add_argument("--num-cpus", type=int, default=16)
 parser.add_argument(
@@ -42,10 +42,10 @@ parser.add_argument(
     "be achieved within --stop-timesteps AND --stop-iters.",
 )
 parser.add_argument(
-    "--stop-iters", type=int, default=200, help="Number of iterations to train." # was 200
+    "--stop-iters", type=int, default=20, help="Number of iterations to train." # was 200
 )
 parser.add_argument(
-    "--stop-timesteps", type=int, default=1000000, help="Number of timesteps to train." # was 100000
+    "--stop-timesteps", type=int, default=1000, help="Number of timesteps to train." # was 100000
 )
 parser.add_argument(
     "--stop-reward", type=float, default=150.0, help="Reward at which we stop training."
@@ -60,7 +60,7 @@ if __name__ == "__main__":
 
 
     temp_env = CustomRl3()
-    pol = PolicySpec(observation_space=temp_env._observationSpace(),action_space=temp_env._actionSpace())
+    pol = PolicySpec()
     # Setup PPO with an ensemble of `num_policies` different policies.
     policies = {"policy_{}".format(i): pol for i in range(args.num_policies)}
     policy_ids = list(policies.keys())
@@ -77,7 +77,7 @@ if __name__ == "__main__":
         .training(num_sgd_iter=20)
         .multi_agent(policies=policies, policy_mapping_fn=policy_mapping_fn)
         .resources(num_gpus=int(os.environ.get("RLLIB_NUM_GPUS", "0")))
-
+        .rollouts(num_rollout_workers=1)
     )
 
 
