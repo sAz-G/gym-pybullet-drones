@@ -26,6 +26,7 @@ def policy_mapping_fn(agent_id, episode, worker, **kwargs):
 algo = (
     PPOConfig()
     .rollouts(num_rollout_workers=1)
+    .update_from_dict({"model":{"fcnet_hiddens": [1],}})
     .multi_agent(policies=policies, policy_mapping_fn=policy_mapping_fn)
     .resources(num_gpus=0)
     .environment(env=CustomRl3)
@@ -51,7 +52,7 @@ if __name__ == '__main__':
                 checkpoint_dir = algo.save()
                 print(f"Checkpoint saved in directory {checkpoint_dir}")
 
-#from ray.rllib.models import MODEL_DEFAULTS
+from ray.rllib.models import MODEL_DEFAULTS
 
 #     .update_from_dict({"model":{"fcnet_hiddens": [1],}})
 # MODEL_DEFAULTS["fcnet_hiddens"] = [1,1]

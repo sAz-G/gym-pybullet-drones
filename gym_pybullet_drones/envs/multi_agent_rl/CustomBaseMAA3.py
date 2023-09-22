@@ -64,9 +64,31 @@ set_of_obstacles = np.array([
 
 
 
+class RandomSetsGenerator():
+    def __init__(self,set_of_pstns=None,set_of_obstcls=None, set_of_trgts=None, N_q = 10, N_o = 5):
+        self.pstns      = set_of_pstns
+        self.obs_pstns  = set_of_obstcls
+        self.targets    = set_of_trgts
+        self.N_o        = N_o
+        self.N_q        = N_q
+
+    def random_quad_pos(self,q):
+        pass
+
+    def random_obst_pos(self,o):
+        pass
+
+    def random_obst_vel(self,o):
+        pass
+
+
+
+
+
 
 class CustomRl3(CustomBaseAviary, MultiAgentEnv):
-    # add drone id here in case you continue with this implementation. Do it as if it is an agent is learning 
+    # add drone id here in case you continue with this implementation. Do it as if it is an agent is learning
+    IS_GUI =False
     def __init__(self,
                  conf             = None,
                  num_drones: int  = 4,
@@ -92,9 +114,14 @@ class CustomRl3(CustomBaseAviary, MultiAgentEnv):
         initial_xyzs = copy.deepcopy(set_of_positions)
         initial_rpys = None
         physics: Physics = Physics.PYB
-        pyb_freq: int = 240
+        pyb_freq:  int = 240
         ctrl_freq: int = 240
-        gui = True
+        if not CustomRl3.IS_GUI:
+            CustomRl3.IS_GUI = True
+            gui = True
+        else:
+            gui = False
+
         record = False
         obstacles = False
         user_debug_gui = True
@@ -458,8 +485,8 @@ class CustomRl3(CustomBaseAviary, MultiAgentEnv):
         else:
             print("[ERROR] in BaseMultiagentAviary._actionSpace()")
             exit()
-        act_lower_bound = np.array([-1, -1, -1, 0, 0, 0,0])
-        act_upper_bound = np.array([1, 1, 1, 1, 1, 1,1])
+        act_lower_bound = np.array([-1, -1, -1, 0, 0, 0,0,0])
+        act_upper_bound = np.array([1, 1, 1, 1, 1, 1,1,1])
         return spaces.Box(low=act_lower_bound,
                           high=act_upper_bound,
                           dtype=np.float32
@@ -566,6 +593,9 @@ class CustomRl3(CustomBaseAviary, MultiAgentEnv):
                                       ])#.reshape(20, )
 
         return norm_and_clipped
+
+    def _addObstacles(self):
+        pass
 
 #########################################################################################################################
 #########################################################################################################################

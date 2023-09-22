@@ -21,6 +21,7 @@ from ray.rllib.utils.framework import try_import_tf
 from ray.rllib.utils.test_utils import check_learning_achieved
 
 from gym_pybullet_drones.envs.multi_agent_rl.CustomBaseMAA3 import CustomRl3
+from ray.rllib.policy.policy import Policy
 
 tf1, tf, tfv = try_import_tf()
 
@@ -54,17 +55,17 @@ parser.add_argument(
 if __name__ == "__main__":
     args = parser.parse_args()
 
+    stop_iter       = 200
+    stop_timesteps  = 10**7
+    stop_reward     = 150
+
     ray.init(num_cpus=args.num_cpus or None)
 
-    # Register the models to use.
-
-
     temp_env = CustomRl3()
-    pol = PolicySpec()
+    pol = PolicySpec(action_space=temp_env._actionSpace(), observation_space=temp_env._observationSpace())
     # Setup PPO with an ensemble of `num_policies` different policies.
     policies = {"policy_{}".format(i): pol for i in range(args.num_policies)}
     policy_ids = list(policies.keys())
-
 
     def policy_mapping_fn(agent_id, episode, worker, **kwargs):
         pol_id = random.choice(policy_ids)
@@ -76,25 +77,30 @@ if __name__ == "__main__":
         .framework(args.framework)
         .training(num_sgd_iter=20)
         .multi_agent(policies=policies, policy_mapping_fn=policy_mapping_fn)
-        .resources(num_gpus=int(os.environ.get("RLLIB_NUM_GPUS", "0")))
-        .rollouts(num_rollout_workers=1)
+        .update_from_dict({"model":{"fcnet_hiddens": [256,256],}})
+        #.resources(num_gpus=int(os.environ.get("RLLIB_NUM_GPUS", "0")))
+        .resources(num_gpus=1)
+        .rollouts(num_rollout_workers=4)
     )
 
-
-
     stop = {
-      #  "episode_reward_mean": args.stop_reward,
-        "timesteps_total": args.stop_timesteps,
-        "training_iteration": args.stop_iters,
+      #  "episode_reward_mean": stop_reward,
+        "timesteps_total": stop_timesteps,
+        "training_iteration": stop_iter,
     }
+
+    pth = "C:\\Users\sAz\Documents\GitHub\gym-pybullet-drones\gym_pybullet_drones\examples\\results\latest\\"
 
     results = tune.Tuner(
         "PPO",
         param_space=config.to_dict(),
-        run_config=air.RunConfig(stop=stop, verbose=1, storage_path="./")
+        run_config=air.RunConfig(stop=stop, verbose=1, storage_path=pth)
     ).fit()
 
     if args.as_test:
         check_learning_achieved(results, args.stop_reward)
 
+    print("I AM ACTION SPACE",config.to_dict())
     ray.shutdown()
+
+
