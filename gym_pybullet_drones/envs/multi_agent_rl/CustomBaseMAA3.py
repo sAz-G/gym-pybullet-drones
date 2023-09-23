@@ -164,10 +164,11 @@ class CustomRl3(CustomBaseAviary, MultiAgentEnv):
                  act_size         = 4,
                  set_of_positions = initial_positions, # consider removing the global variable and use the rendering environment to obtain this information
                  set_of_obs_pos   = None,
-                 max_vel          = 100,
+                 max_vel          = 30,
                  xyz_dim          = 4,
                  act_type         = ActionType.VEL,
                  ):
+
 
         set_of_positions = set_of_positions[0:num_drones,:]
         set_of_targets = set_of_targets[0:num_drones,:]
@@ -183,7 +184,7 @@ class CustomRl3(CustomBaseAviary, MultiAgentEnv):
         ctrl_freq: int = 240
         if not CustomRl3.IS_GUI:
             CustomRl3.IS_GUI = True
-            gui = True
+            gui = False
         else:
             gui = False
 
@@ -194,30 +195,32 @@ class CustomRl3(CustomBaseAviary, MultiAgentEnv):
         output_folder = 'results'
 
 
-        self.ACT_TYPE = act_type
-        # custom reinforcement learning parameters
-        self.N_q = num_drones
-        self.N_o = N_o
-        self.OBS_SIZE = obser_size
-        self.ACT_SIZE = act_size
-        self.set_of_targets = copy.deepcopy(set_of_targets)
-        self.set_of_quad_pos = set_of_positions[0:num_drones,:]
-        self.set_of_quad_vel = np.zeros((self.N_q, 3))
-        self.set_of_obs_pos = set_of_obs_pos
-        self.set_of_obs_vel = np.zeros((self.N_o, 3))
-        self.k_neighbours = k_neighbours
+        self.ACT_TYPE         = act_type
+        self.N_q              = num_drones
+        self.N_o              = N_o
+        self.OBS_SIZE         = obser_size
+        self.ACT_SIZE         = act_size
+        self.set_of_targets   = copy.deepcopy(set_of_targets)
+        self.set_of_quad_pos  = set_of_positions[0:num_drones,:]
+        self.set_of_quad_vel  = np.zeros((self.N_q, 3))
+        self.set_of_obs_pos   = set_of_obs_pos
+        self.set_of_obs_vel   = np.zeros((self.N_o, 3))
+        self.k_neighbours     = k_neighbours
         #self.observation_space = self._observationSpace()
         #self.action_space = self._actionSpace()
-        self.MAX_LIN_V = max_vel
-        self.MAX_DISTANCE = np.sqrt(3) * xyz_dim
-        self.MAX_BEARING = np.pi
-        self.col_radius = 0.6
-        self.MAX_XYZ = xyz_dim
-        self.terminateds = set()
-        self.truncateds = set()
-        self.NUM_DRONES = num_drones
-        self._agent_ids = set(range(self.NUM_DRONES))
-        self.EPISODE_LEN_SEC = 150
+        self.MAX_LIN_V        = max_vel
+        self.MAX_DISTANCE     = np.sqrt(3) * xyz_dim
+        self.MAX_BEARING      = np.pi
+        self.col_radius       = 0.6
+        self.MAX_XYZ          = xyz_dim
+        self.terminateds      = set()
+        self.truncateds       = set()
+        self.NUM_DRONES       = num_drones
+        self._agent_ids       = set(range(self.NUM_DRONES))
+        self.EPISODE_LEN_SEC  = 1500
+        self.EPISODE_LEN_STEP = 10**3
+        self.observation_dict = {k: None for k in range(self.N_q)}
+        self.action_dict      = {k: 0 for k in range(self.N_q)}
 
 
         if act_type in [ActionType.VEL]:
@@ -437,14 +440,14 @@ class CustomRl3(CustomBaseAviary, MultiAgentEnv):
              own_pos_min_xyz, own_vel_min_xyz,
              own_vel_min_xyz, own_vel_min_xyz,
              vel_p_min_xyz, vel_p_min_xyz,
-             vel_p_min_xyz, dist_t_min,
-             dist_p_min, bearing_t_min, bearing_p_min] , dtype=np.float32)
+             vel_p_min_xyz, dist_p_min,
+             dist_t_min, bearing_t_min, bearing_p_min] , dtype=np.float32)
 
         high_bound = np.array(
             [own_pos_max_xyz, own_pos_max_xyz, own_pos_max_xyz,
              own_vel_max_xyz, own_vel_max_xyz, own_vel_max_xyz,
              vel_p_max_xyz, vel_p_max_xyz, vel_p_max_xyz,
-             dist_t_max, dist_p_max, bearing_t_max,
+             dist_p_max, dist_t_max, bearing_t_max,
              bearing_p_max], dtype=np.float32)
 
         return spaces.Box(low=low_bound,
@@ -469,6 +472,26 @@ class CustomRl3(CustomBaseAviary, MultiAgentEnv):
     def step(
             self, action
     ):
+        print()
+        print("Information before next step: ")
+        print()
+        info = self.get_info()
+
+        print()
+        print('position',info[0]['pos'])
+        print()
+
+        print('velocity',info[0]['vel'])
+        print()
+
+        print('action',  info[0]['action'])
+        print()
+
+        print('distance',info[0]['dist_targ'])
+        print()
+
+        print('observation',info[0]['observation'])
+
         action_vel ={}
         for k,v in enumerate(action.values()):
              action_vel[k] = np.random.normal(v[0:4], v[3:7])
@@ -476,17 +499,53 @@ class CustomRl3(CustomBaseAviary, MultiAgentEnv):
         obs, rewards, terminateds, truncateds, infos = super().step(action_vel)
         return obs, rewards, terminateds, truncateds, infos
 
+    def _computeInfo(self):
+        info_dict = {i: {} for i in range(self.N_q)}
+        return info_dict
+
+    def get_info(self):
+        info_dict = {i: {} for i in range(self.N_q)}
+        for q in range(self.N_q):
+            pos_q = self.get_quad_pos(q)
+            vel_q = self.get_quad_vel(q)
+            pos_q = pos_q[0:3]
+            targ_q = self.get_target_position(q)
+            dist_q = np.linalg.norm(pos_q - targ_q)
+
+            obs = self.observation_dict[q]
+            obs[0] = obs[0]*self.MAX_XYZ
+            obs[1] = obs[1]*self.MAX_XYZ
+            obs[2] = obs[2]*self.MAX_XYZ
+
+            obs[3] = obs[3] * self.MAX_LIN_V
+            obs[4] = obs[4] * self.MAX_LIN_V
+            obs[5] = obs[5] * self.MAX_LIN_V
+
+            info_dict[q] = {"pos" : pos_q,
+                            "vel" : vel_q,
+                            "dist_targ" : dist_q,
+                            "action"   : self.last_action,
+                            "observation" : self.observation_dict[q]
+                            }
+        return info_dict
+
     def _computeTruncated(self):
-        bool_val = False
-        truncated = {i: bool_val for i in range(self.NUM_DRONES)}
-        truncated["__all__"] = False
+        arrived_dist = .03
+        all_val = True
+        truncated = {i: False for i in range(self.NUM_DRONES)}
+
+        for q in range(self.NUM_DRONES):
+            pos_q  = self.get_quad_pos(q)[0:3]
+            targ_q = self.get_target_position(q)
+            dist_q = np.linalg.norm(pos_q-targ_q)
+            truncated[q] = dist_q <= arrived_dist
+            all_val = all_val and truncated[q]
+
+        truncated["__all__"] = all_val
         return truncated
 
-    def _computeInfo(self):
-        return {i: {} for i in range(self.NUM_DRONES)}
-
     def _computeTerminated(self):
-        bool_val = True  if self.step_counter/self.PYB_FREQ > self.EPISODE_LEN_SEC else False
+        bool_val = True  if self.step_counter> self.EPISODE_LEN_STEP else False
         done = {i: bool_val for i in range(self.NUM_DRONES)}
         done["__all__"] = True if True in done.values() else False
         return done
@@ -497,6 +556,7 @@ class CustomRl3(CustomBaseAviary, MultiAgentEnv):
             obs = self._clipAndNormalizeState(self.get_observation(i))  # observation of positions to avoid
             obs_final[i] = np.array(obs, dtype=np.float32)
 
+        self.observation_dict = obs_final
         return obs_final
 
     def _computeReward(self):
@@ -518,9 +578,14 @@ class CustomRl3(CustomBaseAviary, MultiAgentEnv):
 
             N_k = len(dist[dist < self.col_radius])
             target_vec = own_target - own_pos
-            dot_prod_vp = np.dot(own_vel, target_vec)
 
-            rewards[k] = dot_prod_vp - 1.0 * N_k
+            if np.linalg.norm(own_vel)*np.linalg.norm(target_vec) < .000000000001:
+                abs = .000000000001
+            else:
+                abs = np.linalg.norm(own_vel)*np.linalg.norm(target_vec)
+            dot_prod_vp = np.dot(own_vel, target_vec)/abs
+
+            rewards[k] = 10*dot_prod_vp - 1.0 * N_k
         return rewards
 
 
@@ -629,31 +694,36 @@ class CustomRl3(CustomBaseAviary, MultiAgentEnv):
                """
 
         # maximal range values
-        MAX_LIN_VEL     = 30 # maximal range linear velocity
-        MAX_XYZ         = 4  # maximal range position (4x4x4)
+        MAX_LIN_VEL     = self.MAX_LIN_V # maximal range linear velocity
+        MAX_XYZ         = self.MAX_XYZ  # maximal range position (4x4x4)
         MAX_OBST_DIST   = np.sqrt(3 * MAX_XYZ ** 2)
-        MAX_BEARING     = np.pi # max bearing to target or peer
+        MAX_BEARING     = self.MAX_BEARING # max bearing to target or peer
 
        # MAX_PITCH_ROLL  = np.pi  # Full range
 
         clipped_pos_xyz              = np.clip(state[0:3],      -MAX_XYZ, MAX_XYZ)                      # own position xy
         clipped_vel_xyz              = np.clip(state[3:6],      -MAX_LIN_VEL, MAX_LIN_VEL)    # own velocity xy
-        clipped_peer_rel_veloc       = np.clip(state[6:9],      -MAX_LIN_VEL, MAX_LIN_VEL)
-        clipped_distances            = np.clip(state[9:11],     0, MAX_OBST_DIST)
-        clipped_bearing              = np.clip(state[11:13],    0 , MAX_BEARING)
+        clipped_peer_rel_veloc       = np.clip(state[6:9],      -2.0*MAX_LIN_VEL, 2.0*MAX_LIN_VEL)
+        clipped_distance            = np.clip(state[9],     0., 2.0*MAX_OBST_DIST)
+        clipped_distance_t            = np.clip(state[10],     0., MAX_OBST_DIST)
+        clipped_bearing_t              = np.clip(state[11],    0. , MAX_BEARING)
+        clipped_bearing              = np.clip(state[12],    0. , 2.0*MAX_BEARING)
 
         # normalize the values
         normalized_pos_xyz              = clipped_pos_xyz  / MAX_XYZ
         normalized_vel_xyz              = clipped_vel_xyz  / MAX_LIN_VEL
         normalized_peer_rel_veloc       = clipped_peer_rel_veloc     / MAX_LIN_VEL
-        normalized_distances            = clipped_distances          / MAX_OBST_DIST
+        normalized_distance            = clipped_distance          / MAX_OBST_DIST
+        normalized_distance_t            = clipped_distance_t          / MAX_OBST_DIST
+        normalized_bearing_t              = clipped_bearing_t            / MAX_BEARING
         normalized_bearing              = clipped_bearing            / MAX_BEARING
-
 
         norm_and_clipped = np.hstack([normalized_pos_xyz,
                                       normalized_vel_xyz,
                                       normalized_peer_rel_veloc,
-                                      normalized_distances,
+                                      normalized_distance,
+                                      normalized_distance_t,
+                                      normalized_bearing_t,
                                       normalized_bearing
                                       ])#.reshape(20, )
 
