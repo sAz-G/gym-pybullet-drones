@@ -23,37 +23,8 @@ from ray.rllib.utils.test_utils import check_learning_achieved
 from gym_pybullet_drones.envs.multi_agent_rl.CustomBaseMAA3 import CustomRl3
 from ray.rllib.policy.policy import Policy
 
-tf1, tf, tfv = try_import_tf()
-
-parser = argparse.ArgumentParser()
-
-# parser.add_argument("--num-agents", type=int, default=4)
-# parser.add_argument("--num-policies", type=int, default=1)
-# parser.add_argument("--num-cpus", type=int, default=16)
-# parser.add_argument(
-#     "--framework",
-#     choices=["tf", "tf2", "torch"],
-#     default="torch",
-#     help="The DL framework specifier.",
-# )
-# parser.add_argument(
-#     "--as-test",
-#     action="store_true",
-#     help="Whether this script should be run as a test: --stop-reward must "
-#     "be achieved within --stop-timesteps AND --stop-iters.",
-# )
-# parser.add_argument(
-#     "--stop-iters", type=int, default=20, help="Number of iterations to train." # was 200
-# )
-# parser.add_argument(
-#     "--stop-timesteps", type=int, default=1000, help="Number of timesteps to train." # was 100000
-# )
-# parser.add_argument(
-#     "--stop-reward", type=float, default=150.0, help="Reward at which we stop training."
-# )
 
 if __name__ == "__main__":
-    args = parser.parse_args()
 
     stop_iter       = 2
     stop_timesteps  = 10**7

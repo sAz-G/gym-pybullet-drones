@@ -2,7 +2,7 @@ import numpy as np
 from ray.rllib.policy.policy import Policy
 from ray import air, tune
 
-checkpoint_path = "C:\\Users\sAz\Documents\GitHub\gym-pybullet-drones\gym_pybullet_drones\examples\\results\latest\PPO\PPO_CustomRl3_e6ded_00000_0_2023-09-21_16-12-30\checkpoint_000001\policies\policy_0"
+checkpoint_path = "/gym_pybullet_drones/examples/results/latest/PPO/PPO_CustomRl3_e6ded_00000_0_2023-09-21_16-12-30/checkpoint_000001/policies/policy_0"
 
 
 

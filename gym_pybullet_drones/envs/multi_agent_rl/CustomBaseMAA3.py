@@ -151,6 +151,11 @@ class RandomSetsGenerator():
         self.rng_vz = np.random.default_rng(self.seed_seqvz)
 
 
+
+
+
+
+
 class CustomRl3(CustomBaseAviary, MultiAgentEnv):
     # add drone id here in case you continue with this implementation. Do it as if it is an agent is learning
     IS_GUI =False
@@ -170,8 +175,8 @@ class CustomRl3(CustomBaseAviary, MultiAgentEnv):
                  ):
 
 
-        set_of_positions = set_of_positions[0:num_drones,:]
-        set_of_targets = set_of_targets[0:num_drones,:]
+        set_of_positions    = set_of_positions[0:num_drones,:]
+        set_of_targets      = set_of_targets[0:num_drones,:]
 
         # parameters for the base aviary
         drone_model: DroneModel = DroneModel.CF2X
@@ -188,11 +193,11 @@ class CustomRl3(CustomBaseAviary, MultiAgentEnv):
         else:
             gui = False
 
-        record = False
-        obstacles = False
-        user_debug_gui = True
-        vision_attributes = False
-        output_folder = 'results'
+        record              = False
+        obstacles           = False
+        user_debug_gui      = False
+        vision_attributes   = False
+        output_folder       = 'results'
 
 
         self.ACT_TYPE         = act_type
@@ -249,9 +254,10 @@ class CustomRl3(CustomBaseAviary, MultiAgentEnv):
                          output_folder = output_folder
                          )
 
-        self.SPEED_LIMIT = 0.03 * self.MAX_SPEED_KMH * (1000 / 3600)
+        self.SPEED_LIMIT = 0.08 * self.MAX_SPEED_KMH * (1000 / 3600)
 
         MultiAgentEnv.__init__(self)
+        #self._addObstacles()
 
 
 
@@ -472,25 +478,25 @@ class CustomRl3(CustomBaseAviary, MultiAgentEnv):
     def step(
             self, action
     ):
-        print()
-        print("Information before next step: ")
-        print()
-        info = self.get_info()
-
-        print()
-        print('position',info[0]['pos'])
-        print()
-
-        print('velocity',info[0]['vel'])
-        print()
-
-        print('action',  info[0]['action'])
-        print()
-
-        print('distance',info[0]['dist_targ'])
-        print()
-
-        print('observation',info[0]['observation'])
+        # print()
+        # print("Information before next step: ")
+        # print()
+        # info = self.get_info()
+        #
+        # print()
+        # print('position',info[0]['pos'])
+        # print()
+        #
+        # print('velocity',info[0]['vel'])
+        # print()
+        #
+        # print('action',  info[0]['action'])
+        # print()
+        #
+        # print('distance',info[0]['dist_targ'])
+        # print()
+        #
+        # print('observation',info[0]['observation'])
 
         action_vel ={}
         for k,v in enumerate(action.values()):
@@ -545,7 +551,7 @@ class CustomRl3(CustomBaseAviary, MultiAgentEnv):
         return truncated
 
     def _computeTerminated(self):
-        bool_val = True  if self.step_counter> self.EPISODE_LEN_STEP else False
+        bool_val = True  if self.step_counter > self.EPISODE_LEN_STEP else False
         done = {i: bool_val for i in range(self.NUM_DRONES)}
         done["__all__"] = True if True in done.values() else False
         return done
@@ -616,7 +622,7 @@ class CustomRl3(CustomBaseAviary, MultiAgentEnv):
             print("[ERROR] in BaseMultiagentAviary._actionSpace()")
             exit()
         act_lower_bound = np.array([-1, -1, -1, 0, 0, 0,0,0])
-        act_upper_bound = np.array([1, 1, 1, 1, 1, 1,1,1])
+        act_upper_bound = np.array([1,  1,   1, 1, 1, 1,1,1])
         return spaces.Box(low=act_lower_bound,
                           high=act_upper_bound,
                           dtype=np.float32
@@ -729,8 +735,30 @@ class CustomRl3(CustomBaseAviary, MultiAgentEnv):
 
         return norm_and_clipped
 
-    def _addObstacles(self):
-        pass
+    # def _addObstacles(self):
+    #     """Add obstacles to the environment.
+    #
+    #            These obstacles are loaded from standard URDF files included in Bullet.
+    #
+    #            """
+    #     p.loadURDF("samurai.urdf",
+    #                physicsClientId=self.CLIENT
+    #                )
+    #     p.loadURDF("duck_vhacd.urdf",
+    #                [-.5, -.5, .05],
+    #                p.getQuaternionFromEuler([0, 0, 0]),
+    #                physicsClientId=self.CLIENT
+    #                )
+    #     p.loadURDF("cube_no_rotation.urdf",
+    #                [-.5, -2.5, .5],
+    #                p.getQuaternionFromEuler([0, 0, 0]),
+    #                physicsClientId=self.CLIENT
+    #                )
+    #     p.loadURDF("sphere2.urdf",
+    #                [0, 2, .5],
+    #                p.getQuaternionFromEuler([0, 0, 0]),
+    #                physicsClientId=self.CLIENT
+    #                )
 
 #########################################################################################################################
 #########################################################################################################################
