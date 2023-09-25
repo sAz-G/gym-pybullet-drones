@@ -172,26 +172,24 @@ class CustomRl3(CustomBaseAviary, MultiAgentEnv):
                  max_vel          = 30,
                  xyz_dim          = 4,
                  act_type         = ActionType.VEL,
+                 gui              = False,
+                 episode_len_step = 10**1
                  ):
 
-
-        set_of_positions    = set_of_positions[0:num_drones,:]
-        set_of_targets      = set_of_targets[0:num_drones,:]
+        #print("I AM CONFIG", conf)
+        self.set_of_positions    = set_of_positions[0:num_drones,:]
+        self.set_of_targets      = set_of_targets[0:num_drones,:]
 
         # parameters for the base aviary
         drone_model: DroneModel = DroneModel.CF2X
         num_drones: int = num_drones
         neighbourhood_radius: float = np.inf
-        initial_xyzs = copy.deepcopy(set_of_positions)
+        initial_xyzs = copy.deepcopy(self.set_of_positions)
         initial_rpys = None
         physics: Physics = Physics.PYB
         pyb_freq:  int = 240
         ctrl_freq: int = 240
-        if not CustomRl3.IS_GUI:
-            CustomRl3.IS_GUI = True
-            gui = False
-        else:
-            gui = False
+
 
         record              = False
         obstacles           = False
@@ -205,25 +203,23 @@ class CustomRl3(CustomBaseAviary, MultiAgentEnv):
         self.N_o              = N_o
         self.OBS_SIZE         = obser_size
         self.ACT_SIZE         = act_size
-        self.set_of_targets   = copy.deepcopy(set_of_targets)
-        self.set_of_quad_pos  = set_of_positions[0:num_drones,:]
+        self.set_of_targets   = copy.deepcopy(self.set_of_targets)
+        self.set_of_quad_pos  = self.set_of_positions
         self.set_of_quad_vel  = np.zeros((self.N_q, 3))
         self.set_of_obs_pos   = set_of_obs_pos
         self.set_of_obs_vel   = np.zeros((self.N_o, 3))
         self.k_neighbours     = k_neighbours
-        #self.observation_space = self._observationSpace()
-        #self.action_space = self._actionSpace()
         self.MAX_LIN_V        = max_vel
         self.MAX_DISTANCE     = np.sqrt(3) * xyz_dim
         self.MAX_BEARING      = np.pi
-        self.col_radius       = 0.6
+        self.col_radius       = 7
         self.MAX_XYZ          = xyz_dim
         self.terminateds      = set()
         self.truncateds       = set()
         self.NUM_DRONES       = num_drones
         self._agent_ids       = set(range(self.NUM_DRONES))
         self.EPISODE_LEN_SEC  = 1500
-        self.EPISODE_LEN_STEP = 10**3
+        self.EPISODE_LEN_STEP = episode_len_step
         self.observation_dict = {k: None for k in range(self.N_q)}
         self.action_dict      = {k: 0 for k in range(self.N_q)}
 
@@ -258,11 +254,6 @@ class CustomRl3(CustomBaseAviary, MultiAgentEnv):
 
         MultiAgentEnv.__init__(self)
         #self._addObstacles()
-
-
-
-
-
 
 
     ######################## GETTERS ######################################
@@ -470,6 +461,12 @@ class CustomRl3(CustomBaseAviary, MultiAgentEnv):
 
         self.terminateds = set()
         self.truncateds = set()
+
+        self.set_of_quad_pos = self.set_of_positions
+        self.set_of_quad_vel = np.zeros((self.N_q, 3))
+        self.observation_dict = {k: None for k in range(self.N_q)}
+        self.action_dict = {k: 0 for k in range(self.N_q)}
+
         obs, infos =  super().reset(seed=seed, options=options)
 
         return obs, infos
@@ -498,11 +495,11 @@ class CustomRl3(CustomBaseAviary, MultiAgentEnv):
         #
         # print('observation',info[0]['observation'])
 
-        action_vel ={}
-        for k,v in enumerate(action.values()):
-             action_vel[k] = np.random.normal(v[0:4], v[3:7])
+        # action_vel ={}
+        # for k,v in enumerate(action.values()):
+        #      action_vel[k] = np.random.normal(v[0:4], v[3:7])
 
-        obs, rewards, terminateds, truncateds, infos = super().step(action_vel)
+        obs, rewards, terminateds, truncateds, infos = super().step(action)
         return obs, rewards, terminateds, truncateds, infos
 
     def _computeInfo(self):
@@ -535,25 +532,48 @@ class CustomRl3(CustomBaseAviary, MultiAgentEnv):
                             }
         return info_dict
 
+    def is_out_of_bounds(self,pos):
+        if np.abs(pos[0]) > self.MAX_XYZ*2.0:
+            print("OUT OF BOUNDS")
+            return True
+        elif np.abs(pos[1]) > self.MAX_XYZ*2.0:
+            print("OUT OF BOUNDS")
+            return  True
+        elif np.abs(pos[2]) > self.MAX_XYZ*2.0:
+            print("OUT OF BOUNDS")
+            return True
+        else:
+            return False
+
     def _computeTruncated(self):
-        arrived_dist = .03
-        all_val = True
+        all_val = False
         truncated = {i: False for i in range(self.NUM_DRONES)}
 
-        for q in range(self.NUM_DRONES):
-            pos_q  = self.get_quad_pos(q)[0:3]
-            targ_q = self.get_target_position(q)
-            dist_q = np.linalg.norm(pos_q-targ_q)
-            truncated[q] = dist_q <= arrived_dist
-            all_val = all_val and truncated[q]
+        # for q in range(self.NUM_DRONES):
+        #     pos_q        = self.get_quad_pos(q)[0:3]
+        #     #truncated[q] = self.is_out_of_bounds(pos_q) or (self.step_counter > self.EPISODE_LEN_STEP)
+        #     truncated[q] =  (self.step_counter > self.EPISODE_LEN_STEP)
+        #     all_val      = all_val and truncated[q]
 
         truncated["__all__"] = all_val
         return truncated
 
+
     def _computeTerminated(self):
-        bool_val = True  if self.step_counter > self.EPISODE_LEN_STEP else False
+        arrived_dist = .33
+        bool_val = False or (self.step_counter > self.EPISODE_LEN_STEP)
         done = {i: bool_val for i in range(self.NUM_DRONES)}
-        done["__all__"] = True if True in done.values() else False
+        all_val = True if bool_val is True else False
+
+        # for q in range(self.NUM_DRONES):
+        #     pos_q  = self.get_quad_pos(q)[0:3]
+        #     targ_q = self.get_target_position(q)
+        #     dist_q = np.linalg.norm(pos_q-targ_q)
+        #     done[q] = (dist_q <= arrived_dist) or (self.step_counter > self.EPISODE_LEN_STEP)
+        #
+        #     all_val = all_val and done[q]
+
+        done["__all__"] = all_val
         return done
 
     def _computeObs(self):
@@ -591,7 +611,7 @@ class CustomRl3(CustomBaseAviary, MultiAgentEnv):
                 abs = np.linalg.norm(own_vel)*np.linalg.norm(target_vec)
             dot_prod_vp = np.dot(own_vel, target_vec)/abs
 
-            rewards[k] = 10*dot_prod_vp - 1.0 * N_k
+            rewards[k] = 3.3*dot_prod_vp - 1.0 * N_k
         return rewards
 
 
@@ -604,29 +624,29 @@ class CustomRl3(CustomBaseAviary, MultiAgentEnv):
             A Box of size NUM_DRONES x 4, 3, or 1, depending on the action type.
 
         """
-        # if self.ACT_TYPE in [ActionType.VEL]:
-        #     size = 4
-        # else:
-        #     print("[ERROR] in BaseMultiagentAviary._actionSpace()")
-        #     exit()
-        # act_lower_bound = np.array([-1 * np.ones(size)])
-        # act_upper_bound = np.array([+1 * np.ones(size)])
-        # return spaces.Box(low=-1 * np.ones(size),
-        #                            high=np.ones(size),
-        #                            dtype=np.float32
-        #                            )
-
         if self.ACT_TYPE in [ActionType.VEL]:
-            size = 8
+            size = 4
         else:
             print("[ERROR] in BaseMultiagentAviary._actionSpace()")
             exit()
-        act_lower_bound = np.array([-1, -1, -1, 0, 0, 0,0,0])
-        act_upper_bound = np.array([1,  1,   1, 1, 1, 1,1,1])
-        return spaces.Box(low=act_lower_bound,
-                          high=act_upper_bound,
-                          dtype=np.float32
-                          )
+        act_lower_bound = np.array([-1 * np.ones(size)])
+        act_upper_bound = np.array([+1 * np.ones(size)])
+        return spaces.Box(low=-1 * np.ones(size),
+                                   high=np.ones(size),
+                                   dtype=np.float32
+                                   )
+
+        # if self.ACT_TYPE in [ActionType.VEL]:
+        #     size = 8
+        # else:
+        #     print("[ERROR] in BaseMultiagentAviary._actionSpace()")
+        #     exit()
+        # act_lower_bound = np.array([-1, -1, -1, 0, 0, 0,0,0])
+        # act_upper_bound = np.array([1,  1,   1, 1, 1, 1,1,1])
+        # return spaces.Box(low=act_lower_bound,
+        #                   high=act_upper_bound,
+        #                   dtype=np.float32
+        #                   )
 
 
     def _preprocessAction(self,

@@ -16,7 +16,7 @@ DEFAULT_GUI = True
 DEFAULT_RECORD_VIDEO = False
 DEFAULT_SIMULATION_FREQ_HZ = 240
 DEFAULT_CONTROL_FREQ_HZ = 48
-DEFAULT_DURATION_SEC = 12
+DEFAULT_DURATION_SEC = 30
 DEFAULT_OUTPUT_FOLDER = 'results'
 DEFAULT_COLAB = False
 
@@ -50,14 +50,13 @@ def run(
                         num_drones=4,
                         set_of_positions=initial_positions,
                         set_of_targets=set_of_targets,
+                        gui=True
                      )
 
 
-    action = { k : np.zeros(4) for k in range(4)}
+    action = {k : np.zeros(4) for k in range(4)}
 
-    checkpoint_path = "C:\\Users\sAz\Documents\GitHub\gym-pybullet-drones\gym_pybullet_drones\examples\\results\latest\PPO\PPO_CustomRl3_e2b4b_00000_0_2023-09-24_15-04-24\checkpoint_000002\policies\policy_0"
-
-
+    checkpoint_path = "C:\\Users\sAz\Documents\GitHub\gym-pybullet-drones\gym_pybullet_drones\examples\\results\latest\PPO\PPO_CustomRl3_de172_00000_0_2023-09-24_21-45-08\checkpoint_000100\policies\policy_0"
     policy = Policy.from_checkpoint(checkpoint_path)
     START = time.time()
 
@@ -69,7 +68,7 @@ def run(
         for k in range(4):
             obs_temp = obs[k]
             action_temp = policy.compute_single_action(obs_temp)
-            print( action_temp)
+            #print( action_temp)
             action_temp =  np.abs(action_temp[0])
             action[k] = action_temp
         #### Printout ##############################################
@@ -85,9 +84,7 @@ def run(
 if __name__ == '__main__':
     #run()
 
-    checkpoint_path = "C:\\Users\sAz\Documents\GitHub\gym-pybullet-drones\gym_pybullet_drones\examples\\results\latest\PPO\PPO_CustomRl3_20115_00000_0_2023-09-24_15-13-17\checkpoint_000002\policies\policy_0"
-
-
+    checkpoint_path = "C:\\Users\sAz\Documents\GitHub\gym-pybullet-drones\gym_pybullet_drones\examples\\results\latest\PPO\PPO_CustomRl3_de172_00000_0_2023-09-24_21-45-08\checkpoint_000100\policies\policy_0"
     policy = Policy.from_checkpoint(checkpoint=checkpoint_path)
 
     print(type(policy))
@@ -103,7 +100,3 @@ if __name__ == '__main__':
     print(wghts['encoder.actor_encoder.net.mlp.2.weight'].shape)
     print(wghts['pi.net.mlp.0.weight'].shape)
     #print(wghts.keys())
-
-    policy.export_model("./")
-    chkpnt = torch.load("C:\\Users\sAz\Documents\GitHub\gym-pybullet-drones\gym_pybullet_drones\examples\\thesis\model.pt")
-    print(chkpnt)

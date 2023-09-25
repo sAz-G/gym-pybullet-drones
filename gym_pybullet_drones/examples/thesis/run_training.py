@@ -25,9 +25,10 @@ from ray.rllib.policy.policy import Policy
 
 
 if __name__ == "__main__":
+    ray.shutdown()
 
-    stop_iter       = 2
-    stop_timesteps  = 10**7
+    stop_iter       = 15
+    stop_timesteps  = 10**8
     stop_reward     = 150
 
     ray.init(num_cpus=16)
@@ -48,10 +49,10 @@ if __name__ == "__main__":
         .framework("torch")
         #.training(num_sgd_iter=20)
         .multi_agent(policies=policies, policy_mapping_fn=policy_mapping_fn)
-        .update_from_dict({"model":{"fcnet_hiddens": [256,256],}})
+        .update_from_dict({"model":{"fcnet_hiddens": [64,64],}})
         #.resources(num_gpus=int(os.environ.get("RLLIB_NUM_GPUS", "0")))
         .resources(num_gpus=1)
-        .rollouts(num_rollout_workers=1)
+        .rollouts(num_rollout_workers=2)
     )
 
     stop = {
