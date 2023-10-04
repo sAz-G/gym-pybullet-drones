@@ -27,7 +27,7 @@ from ray.rllib.policy.policy import Policy
 if __name__ == "__main__":
     ray.shutdown()
 
-    stop_iter       = 50
+    stop_iter       = 100
     stop_timesteps  = 10**8
 
     ray.init(num_cpus=16)

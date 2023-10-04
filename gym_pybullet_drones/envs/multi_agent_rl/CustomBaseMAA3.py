@@ -587,7 +587,7 @@ class CustomRl3(CustomBaseAviary, MultiAgentEnv):
 
 
     def _computeTerminated(self):
-        arrived_dist = 0.3
+        arrived_dist = 0.1
         bool_val = False
         done = {i: bool_val for i in range(self.NUM_DRONES)}
         all_val = True
