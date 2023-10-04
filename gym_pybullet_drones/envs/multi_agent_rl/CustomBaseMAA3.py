@@ -184,7 +184,7 @@ class CustomRl3(CustomBaseAviary, MultiAgentEnv):
                  xyz_dim          = 4,
                  act_type         = ActionType.VEL,
                  gui              = True,
-                 episode_len_step = 10**5
+                 episode_len_step = 10**4
                  ):
 
         #print("I AM CONFIG", conf)
@@ -566,30 +566,29 @@ class CustomRl3(CustomBaseAviary, MultiAgentEnv):
         all_val = False
         truncated = {i: False for i in range(self.NUM_DRONES)}
 
-        # for q in range(self.NUM_DRONES):
-        #     pos_q        = self.get_quad_pos(q)[0:3]
-        #
-        #     truncated[q] = False
-        #     if np.abs(pos_q[0]) > self.MAX_XYZ:
-        #         truncated[q] = True
-        #     elif np.abs(pos_q[1]) > self.MAX_XYZ:
-        #         truncated[q] = True
-        #     elif np.abs(pos_q[2]) > self.MAX_XYZ:
-        #         truncated[q] = True
-        #
-        #     truncated[q] = truncated[q] or (self.step_counter > self.EPISODE_LEN_STEP)
-        #
-        #     if truncated[q]:
-        #         print("Drone ", q, " is truncated")
-        #     all_val      = all_val and truncated[q]
+        for q in range(self.NUM_DRONES):
+            pos_q        = self.get_quad_pos(q)[0:3]
 
+            trunc = False
+            if np.abs(pos_q[0]) > self.MAX_XYZ:
+                trunc = True
+            elif np.abs(pos_q[1]) > self.MAX_XYZ:
+                trunc = True
+            elif np.abs(pos_q[2]) > self.MAX_XYZ:
+                trunc = True
+
+            trunc = trunc or (self.step_counter > self.EPISODE_LEN_STEP)
+
+            all_val      = all_val and trunc
+
+        truncated = {i: all_val for i in range(self.NUM_DRONES)}
         truncated["__all__"] = all_val
         return truncated
 
 
     def _computeTerminated(self):
         arrived_dist = 0.3
-        bool_val = False # or (self.step_counter > self.EPISODE_LEN_STEP)
+        bool_val = False
         done = {i: bool_val for i in range(self.NUM_DRONES)}
         all_val = True
 
@@ -599,7 +598,7 @@ class CustomRl3(CustomBaseAviary, MultiAgentEnv):
             dist_q  = np.linalg.norm(pos_q-targ_q)
             #done[q] = (dist_q <= arrived_dist)
 
-            all_val = all_val and (dist_q <= arrived_dist) #done[q]
+            all_val = (all_val and (dist_q <= arrived_dist) ) #done[q]
 
         if all_val:
             print("ALL VAL IS ON")
