@@ -22,13 +22,14 @@ from ray.rllib.utils.test_utils import check_learning_achieved
 
 from gym_pybullet_drones.envs.multi_agent_rl.CustomBaseMAA3 import CustomRl3
 from ray.rllib.policy.policy import Policy
-
+from ray.tune.logger import pretty_print
 
 if __name__ == "__main__":
     ray.shutdown()
 
-    stop_iter       = 20
-    stop_timesteps  = 10**8
+    stop_iter       = 15
+    stop_timesteps  = 10**10
+    stop_reward     = 150
 
     ray.init(num_cpus=16)
 
@@ -46,7 +47,7 @@ if __name__ == "__main__":
         PPOConfig()
         .environment(CustomRl3)
         .framework("torch")
-        #.training(num_sgd_iter=20)
+       # .training(num_sgd_iter=20)
         .multi_agent(policies=policies, policy_mapping_fn=policy_mapping_fn)
         .update_from_dict({"model":{"fcnet_hiddens": [64,64],}})
         #.resources(num_gpus=int(os.environ.get("RLLIB_NUM_GPUS", "0")))
@@ -55,20 +56,30 @@ if __name__ == "__main__":
     )
 
     stop = {
-        #"timesteps_total": stop_timesteps,
+      #  "episode_reward_mean": stop_reward,
+        "timesteps_total": stop_timesteps,
         "training_iteration": stop_iter,
     }
 
     pth = "C:\\Users\sAz\Documents\GitHub\gym-pybullet-drones\gym_pybullet_drones\examples\\results\latest\\"
 
-    results = tune.Tuner(
-        "PPO",
-        param_space=config.to_dict(),
-        run_config=air.RunConfig(stop=stop, verbose=1)
-    ).fit()
+    # results = tune.Tuner(
+    #     "PPO",
+    #     param_space=config.to_dict(),
+    #     run_config=air.RunConfig(stop=stop, verbose=1)
+    # ).fit()
+    algo = config.build()
 
+    for k in range(10):
+        result = algo.train()
+        print(pretty_print(result))
 
+        if k % 5 == 0:
+            checkpoint_dir = algo.save()
+            print(f"Checkpoint saved in directory {checkpoint_dir}")
 
+    # if args.as_test:
+    #     check_learning_achieved(results, args.stop_reward)
 
     ray.shutdown()
 
