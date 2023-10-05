@@ -17,17 +17,15 @@ import ray
 from ray import air, tune
 from ray.rllib.algorithms.ppo import PPOConfig
 from ray.rllib.policy.policy import PolicySpec
-from ray.rllib.utils.framework import try_import_tf
-from ray.rllib.utils.test_utils import check_learning_achieved
+
 
 from gym_pybullet_drones.envs.multi_agent_rl.CustomBaseMAA3 import CustomRl3
-from ray.rllib.policy.policy import Policy
-
+from ray.train import RunConfig, CheckpointConfig
 
 if __name__ == "__main__":
     ray.shutdown()
 
-    stop_iter       = 100
+    stop_iter       = 200
     stop_timesteps  = 10**8
 
     ray.init(num_cpus=16)

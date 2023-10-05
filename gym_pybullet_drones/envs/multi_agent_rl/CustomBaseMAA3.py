@@ -183,7 +183,7 @@ class CustomRl3(CustomBaseAviary, MultiAgentEnv):
                  max_vel          = 30,
                  xyz_dim          = 4,
                  act_type         = ActionType.VEL,
-                 gui              = True,
+                 gui              = False,
                  episode_len_step = 10**4
                  ):
 
@@ -505,7 +505,7 @@ class CustomRl3(CustomBaseAviary, MultiAgentEnv):
         # print()
         #
         # print('observation',info[0]['observation'])
-
+        print(action)
         action_vel ={}
         for k,v in enumerate(action.values()):
              action_vel[k] = np.random.normal(v[0:4], v[3:7])
