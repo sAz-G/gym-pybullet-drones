@@ -505,12 +505,11 @@ class CustomRl3(CustomBaseAviary, MultiAgentEnv):
         # print()
         #
         # print('observation',info[0]['observation'])
-        print(action)
-        action_vel ={}
-        for k,v in enumerate(action.values()):
-             action_vel[k] = np.random.normal(v[0:4], v[3:7])
+        # action_vel ={}
+        # for k,v in enumerate(action.values()):
+        #      action_vel[k] = np.random.normal(v[0:4], v[3:7])
        # print("I AM ACTION SPACE",action)
-        obs, rewards, terminateds, truncateds, infos = super().step(action_vel)
+        obs, rewards, terminateds, truncateds, infos = super().step(action)
         #print("obs {}".format(obs) )
         #print("obs shape{}".format(obs[0].shape) )
         # print("rewards {}".format(rewards) )
@@ -665,29 +664,29 @@ class CustomRl3(CustomBaseAviary, MultiAgentEnv):
             A Box of size NUM_DRONES x 4, 3, or 1, depending on the action type.
 
         """
-        # if self.ACT_TYPE in [ActionType.VEL]:
-        #     size = 4
-        # else:
-        #     print("[ERROR] in BaseMultiagentAviary._actionSpace()")
-        #     exit()
-        # act_lower_bound = np.array([-1 * np.ones(size)])
-        # act_upper_bound = np.array([+1 * np.ones(size)])
-        # return spaces.Box(low=-1 * np.ones(size),
-        #                            high=np.ones(size),
-        #                            dtype=np.float32
-        #                            )
-
         if self.ACT_TYPE in [ActionType.VEL]:
-            size = 8
+            size = 4
         else:
             print("[ERROR] in BaseMultiagentAviary._actionSpace()")
             exit()
-        act_lower_bound = np.array([-1, -1, -1, 0, 0, 0,0,0])
-        act_upper_bound = np.array([1,  1,   1, 1, 1, 1,1,1])
-        return spaces.Box(low=act_lower_bound,
-                          high=act_upper_bound,
-                          dtype=np.float32
-                          )
+        act_lower_bound = np.array([-1 * np.ones(size)])
+        act_upper_bound = np.array([+1 * np.ones(size)])
+        return spaces.Box(low=-1 * np.ones(size),
+                                   high=np.ones(size),
+                                   dtype=np.float32
+                                   )
+
+        # if self.ACT_TYPE in [ActionType.VEL]:
+        #     size = 8
+        # else:
+        #     print("[ERROR] in BaseMultiagentAviary._actionSpace()")
+        #     exit()
+        # act_lower_bound = np.array([-1, -1, -1, 0, 0, 0,0,0])
+        # act_upper_bound = np.array([1,  1,   1, 1, 1, 1,1,1])
+        # return spaces.Box(low=act_lower_bound,
+        #                   high=act_upper_bound,
+        #                   dtype=np.float32
+        #                   )
 
 
     def _preprocessAction(self,
