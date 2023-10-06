@@ -64,12 +64,12 @@ from gym_pybullet_drones.utils.enums import DroneModel, Physics, ActionType
 
 initial_positions =  np.array([
     [2.0, 0, 1.0],
-    [0, 2.0, 1.0]
+    [0.0, 2.0, 1.0]
     ])
 
 set_of_targets = np.array([
-    [1.0,0, 1.0],
-    [.0, 1.0,1.0]
+    [1.0, 0.0, 1.0],
+    [0.0, 1.0, 1.0]
     ])
 
 
@@ -644,12 +644,12 @@ class CustomRl3(CustomBaseAviary, MultiAgentEnv):
 
             if np.abs(own_pos[0]) > self.MAX_XYZ:
                 #rewards[k] += -10**12
-                rewards[k] += np.exp(np.abs(own_pos[0]) + self.MAX_XYZ)
+                rewards[k] = -np.exp(np.abs(own_pos[0]) + self.MAX_XYZ)
             elif np.abs(own_pos[1]) > self.MAX_XYZ:
                 #rewards[k] += -10**12
-                rewards[k] += np.exp(np.abs(own_pos[1]) + self.MAX_XYZ)
+                rewards[k] = -np.exp(np.abs(own_pos[1]) + self.MAX_XYZ)
             elif np.abs(own_pos[2]) > self.MAX_XYZ:
-                rewards[k] += np.exp(np.abs(own_pos[2]) + self.MAX_XYZ)
+                rewards[k] = -np.exp(np.abs(own_pos[2]) + self.MAX_XYZ)
 
 
         return rewards

@@ -327,12 +327,15 @@ class CustomBaseAviary(gym.Env):
                                       path=self.ONBOARD_IMG_PATH + "/drone_" + str(i) + "/",
                                       frame_num=int(self.step_counter / self.IMG_CAPTURE_FREQ)
                                       )
+
         #### Read the GUI's input parameters #######################
         if self.GUI and self.USER_DEBUG:
             current_input_switch = p.readUserDebugParameter(self.INPUT_SWITCH, physicsClientId=self.CLIENT)
             if current_input_switch > self.last_input_switch:
                 self.last_input_switch = current_input_switch
                 self.USE_GUI_RPM = True if self.USE_GUI_RPM == False else False
+
+
         if self.USE_GUI_RPM:
             for i in range(4):
                 self.gui_input[i] = p.readUserDebugParameter(int(self.SLIDERS[i]), physicsClientId=self.CLIENT)
@@ -352,6 +355,8 @@ class CustomBaseAviary(gym.Env):
         else:
             self._saveLastAction(action)
             clipped_action = np.reshape(self._preprocessAction(action), (self.NUM_DRONES, 4))
+
+
         #### Repeat for as many as the aggregate physics steps #####
         for _ in range(self.PYB_STEPS_PER_CTRL):
             #### Update and store the drones kinematic info for certain
@@ -384,6 +389,7 @@ class CustomBaseAviary(gym.Env):
                 p.stepSimulation(physicsClientId=self.CLIENT)
             #### Save the last applied action (e.g. to compute drag) ###
             self.last_clipped_action = clipped_action
+
         #### Update and store the drones kinematic information #####
         self._updateAndStoreKinematicInformation()
         #### Prepare the return values #############################

@@ -25,8 +25,8 @@ from ray.train import RunConfig, CheckpointConfig
 if __name__ == "__main__":
     ray.shutdown()
 
-    stop_iter       = 200
-    stop_timesteps  = 10**8
+    stop_iter       = 300
+    stop_timesteps  = 10**10
 
     ray.init(num_cpus=16)
 
@@ -49,7 +49,7 @@ if __name__ == "__main__":
         .update_from_dict({"model":{"fcnet_hiddens": [64,64],}})
         #.resources(num_gpus=int(os.environ.get("RLLIB_NUM_GPUS", "0")))
         .resources(num_gpus=1)
-        .rollouts(num_rollout_workers=2)
+        .rollouts(num_rollout_workers=6)
     )
 
     stop = {
@@ -62,7 +62,7 @@ if __name__ == "__main__":
     results = tune.Tuner(
         "PPO",
         param_space=config.to_dict(),
-        run_config=air.RunConfig(stop=stop, verbose=1)
+        run_config=air.RunConfig(stop=stop, verbose=1, checkpoint_config=CheckpointConfig(num_to_keep=1))
     ).fit()
 
 

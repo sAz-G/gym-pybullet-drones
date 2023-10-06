@@ -13,7 +13,7 @@ DEFAULT_GUI = True
 DEFAULT_RECORD_VIDEO = False
 DEFAULT_SIMULATION_FREQ_HZ = 240
 DEFAULT_CONTROL_FREQ_HZ = 48
-DEFAULT_DURATION_SEC = 15
+DEFAULT_DURATION_SEC = 30
 DEFAULT_OUTPUT_FOLDER = 'results'
 DEFAULT_COLAB = False
 
@@ -65,7 +65,10 @@ def run(
 
     action = {k : np.zeros(4) for k in range(num_drones)}
 
-    checkpoint_path = "C:\\Users\sAz\\ray_results\sharif_bivarl\PPO_2023-10-05_11-54-50\PPO_CustomRl3_3978c_00000_0_2023-10-05_11-54-50\checkpoint_000000\policies\policy_0"
+    #checkpoint_path = "C:\\Users\sAz\\ray_results\PPO_2023-10-06_11-24-17\PPO_CustomRl3_1f998_00000_0_2023-10-06_11-24-17\checkpoint_000000\policies\policy_0"
+    #checkpoint_path = "C:\\Users\sAz\\ray_results\PPO_2023-10-06_12-06-34\PPO_CustomRl3_07815_00000_0_2023-10-06_12-06-34\checkpoint_000000\policies\policy_0"
+    checkpoint_path = "C:\\Users\sAz\\ray_results\PPO_2023-10-06_16-31-11\PPO_CustomRl3_fef36_00000_0_2023-10-06_16-31-11\checkpoint_000000\policies\policy_0"
+
     policy = Policy.from_checkpoint(checkpoint_path)
     START = time.time()
 
@@ -77,7 +80,7 @@ def run(
         for k in range(num_drones):
             obs_temp = obs[k]
             action_temp = policy.compute_single_action(obs_temp)
-            action_temp =  np.abs(action_temp[0])
+            action_temp =  action_temp[0]
             action[k] = action_temp
         #### Printout ##############################################
         env.render()
