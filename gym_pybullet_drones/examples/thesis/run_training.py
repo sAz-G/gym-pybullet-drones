@@ -25,8 +25,8 @@ from ray.train import RunConfig, CheckpointConfig
 if __name__ == "__main__":
     ray.shutdown()
 
-    stop_iter       = 200
-    stop_timesteps  = 10**8
+    stop_iter       = 100
+    stop_timesteps  = 10**6
 
     ray.init(num_cpus=16)
 
@@ -57,7 +57,7 @@ if __name__ == "__main__":
         "training_iteration": stop_iter,
     }
 
-    pth = "C:\\Users\sAz\Documents\GitHub\gym-pybullet-drones\gym_pybullet_drones\examples\\results\latest\\"
+    #pth = "C:\\Users\sAz\Documents\GitHub\gym-pybullet-drones\gym_pybullet_drones\examples\\results\latest\\"
 
     results = tune.Tuner(
         "PPO",

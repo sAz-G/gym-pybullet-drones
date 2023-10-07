@@ -183,7 +183,7 @@ class CustomRl3(CustomBaseAviary, MultiAgentEnv):
                  max_vel          = 30,
                  xyz_dim          = 4,
                  act_type         = ActionType.VEL,
-                 gui              = False,
+                 gui              = True,
                  episode_len_step = 10**4
                  ):
 
@@ -505,12 +505,9 @@ class CustomRl3(CustomBaseAviary, MultiAgentEnv):
         # print()
         #
         # print('observation',info[0]['observation'])
-        print(action)
-        action_vel ={}
-        for k,v in enumerate(action.values()):
-             action_vel[k] = np.random.normal(v[0:4], v[3:7])
-       # print("I AM ACTION SPACE",action)
-        obs, rewards, terminateds, truncateds, infos = super().step(action_vel)
+
+        obs, rewards, terminateds, truncateds, infos = super().step(action)
+
         #print("obs {}".format(obs) )
         #print("obs shape{}".format(obs[0].shape) )
         # print("rewards {}".format(rewards) )
@@ -641,17 +638,16 @@ class CustomRl3(CustomBaseAviary, MultiAgentEnv):
                 abs = np.linalg.norm(own_vel)*np.linalg.norm(target_vec)
             dot_prod_vp = np.dot(own_vel, target_vec)/abs
 
-            rewards[k] = -np.linalg.norm(own_target-own_pos) # - 1.0 * N_k
+            rewards[k] = -np.linalg.norm(own_target-own_pos)**2 # - 1.0 * N_k
 
             if np.abs(own_pos[0]) > self.MAX_XYZ:
-                #rewards[k] += -10**12
                 rewards[k] = -np.exp(np.abs(own_pos[0]) + self.MAX_XYZ)
             elif np.abs(own_pos[1]) > self.MAX_XYZ:
-                #rewards[k] += -10**12
                 rewards[k] = -np.exp(np.abs(own_pos[1]) + self.MAX_XYZ)
             elif np.abs(own_pos[2]) > self.MAX_XYZ:
                 rewards[k] = -np.exp(np.abs(own_pos[2]) + self.MAX_XYZ)
-
+            elif own_pos[2] < 0.10:
+                rewards[k] = -np.exp(np.abs(own_pos[2]) + self.MAX_XYZ)
 
         return rewards
 
@@ -665,29 +661,17 @@ class CustomRl3(CustomBaseAviary, MultiAgentEnv):
             A Box of size NUM_DRONES x 4, 3, or 1, depending on the action type.
 
         """
-        # if self.ACT_TYPE in [ActionType.VEL]:
-        #     size = 4
-        # else:
-        #     print("[ERROR] in BaseMultiagentAviary._actionSpace()")
-        #     exit()
-        # act_lower_bound = np.array([-1 * np.ones(size)])
-        # act_upper_bound = np.array([+1 * np.ones(size)])
-        # return spaces.Box(low=-1 * np.ones(size),
-        #                            high=np.ones(size),
-        #                            dtype=np.float32
-        #                            )
-
         if self.ACT_TYPE in [ActionType.VEL]:
-            size = 8
+            size = 4
         else:
             print("[ERROR] in BaseMultiagentAviary._actionSpace()")
             exit()
-        act_lower_bound = np.array([-1, -1, -1, 0, 0, 0,0,0])
-        act_upper_bound = np.array([1,  1,   1, 1, 1, 1,1,1])
+        act_lower_bound = -1 * np.ones(size)
+        act_upper_bound = 1 * np.ones(size)
         return spaces.Box(low=act_lower_bound,
-                          high=act_upper_bound,
-                          dtype=np.float32
-                          )
+                                   high=act_upper_bound,
+                                   dtype=np.float32
+                                   )
 
 
     def _preprocessAction(self,

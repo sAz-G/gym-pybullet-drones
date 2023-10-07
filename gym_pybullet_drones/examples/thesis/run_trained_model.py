@@ -77,7 +77,7 @@ def run(
         for k in range(num_drones):
             obs_temp = obs[k]
             action_temp = policy.compute_single_action(obs_temp)
-            action_temp =  np.abs(action_temp[0])
+            action_temp =  action_temp[0]
             action[k] = action_temp
         #### Printout ##############################################
         env.render()
