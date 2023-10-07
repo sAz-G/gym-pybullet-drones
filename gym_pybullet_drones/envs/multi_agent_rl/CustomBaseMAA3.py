@@ -641,16 +641,16 @@ class CustomRl3(CustomBaseAviary, MultiAgentEnv):
                 abs = np.linalg.norm(own_vel)*np.linalg.norm(target_vec)
             dot_prod_vp = np.dot(own_vel, target_vec)/abs
 
-            rewards[k] = 100000.0*dot_prod_vp # - 1.0 * N_k
+            rewards[k] = -np.linalg.norm(own_target-own_pos) # - 1.0 * N_k
 
             if np.abs(own_pos[0]) > self.MAX_XYZ:
                 #rewards[k] += -10**12
-                rewards[k] += np.exp(np.abs(own_pos[0]) + self.MAX_XYZ)
+                rewards[k] = -np.exp(np.abs(own_pos[0]) + self.MAX_XYZ)
             elif np.abs(own_pos[1]) > self.MAX_XYZ:
                 #rewards[k] += -10**12
-                rewards[k] += np.exp(np.abs(own_pos[1]) + self.MAX_XYZ)
+                rewards[k] = -np.exp(np.abs(own_pos[1]) + self.MAX_XYZ)
             elif np.abs(own_pos[2]) > self.MAX_XYZ:
-                rewards[k] += np.exp(np.abs(own_pos[2]) + self.MAX_XYZ)
+                rewards[k] = -np.exp(np.abs(own_pos[2]) + self.MAX_XYZ)
 
 
         return rewards
