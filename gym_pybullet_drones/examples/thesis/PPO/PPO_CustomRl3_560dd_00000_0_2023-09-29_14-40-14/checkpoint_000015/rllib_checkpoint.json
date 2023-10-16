@@ -1,0 +1,1 @@
+{"type": "Algorithm", "checkpoint_version": "1.2", "format": "cloudpickle", "state_file": "/home/saz/GitHub/gym-pybullet-drones/gym_pybullet_drones/examples/thesis/PPO/PPO_CustomRl3_560dd_00000_0_2023-09-29_14-40-14/checkpoint_000015/algorithm_state.pkl", "policy_ids": ["policy_0"], "ray_version": "2.6.3", "ray_commit": "8a434b4ee7cd48e60fa1531315d39901fac5d79e"}

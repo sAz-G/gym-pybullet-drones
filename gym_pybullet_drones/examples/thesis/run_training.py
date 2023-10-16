@@ -27,7 +27,7 @@ from ray.rllib.policy.policy import Policy
 if __name__ == "__main__":
     ray.shutdown()
 
-    stop_iter       = 15
+    stop_iter       = 3
     stop_timesteps  = 10**8
     stop_reward     = 150
 
@@ -61,13 +61,14 @@ if __name__ == "__main__":
         "training_iteration": stop_iter,
     }
 
-    pth = "C:\\Users\sAz\Documents\GitHub\gym-pybullet-drones\gym_pybullet_drones\examples\\results\latest\\"
-
+    pth = "./"
     results = tune.Tuner(
         "PPO",
         param_space=config.to_dict(),
         run_config=air.RunConfig(stop=stop, verbose=1, storage_path=pth)
     ).fit()
+
+    print(results.get_best_result().checkpoint)
 
     # if args.as_test:
     #     check_learning_achieved(results, args.stop_reward)

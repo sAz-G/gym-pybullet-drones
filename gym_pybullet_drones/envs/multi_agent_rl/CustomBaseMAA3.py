@@ -152,10 +152,6 @@ class RandomSetsGenerator():
 
 
 
-
-
-
-
 class CustomRl3(CustomBaseAviary, MultiAgentEnv):
     # add drone id here in case you continue with this implementation. Do it as if it is an agent is learning
     IS_GUI =False
@@ -173,7 +169,7 @@ class CustomRl3(CustomBaseAviary, MultiAgentEnv):
                  xyz_dim          = 4,
                  act_type         = ActionType.VEL,
                  gui              = False,
-                 episode_len_step = 10**1
+                 episode_len_step = 10**3
                  ):
 
         #print("I AM CONFIG", conf)
@@ -561,7 +557,7 @@ class CustomRl3(CustomBaseAviary, MultiAgentEnv):
 
     def _computeTerminated(self):
         arrived_dist = .33
-        bool_val = False or (self.step_counter > self.EPISODE_LEN_STEP)
+        bool_val = (self.step_counter > self.EPISODE_LEN_STEP)
         done = {i: bool_val for i in range(self.NUM_DRONES)}
         all_val = True if bool_val is True else False
 
@@ -605,13 +601,13 @@ class CustomRl3(CustomBaseAviary, MultiAgentEnv):
             N_k = len(dist[dist < self.col_radius])
             target_vec = own_target - own_pos
 
-            if np.linalg.norm(own_vel)*np.linalg.norm(target_vec) < .000000000001:
-                abs = .000000000001
+            if np.linalg.norm(own_vel)*np.linalg.norm(target_vec) < .0000001:
+                abs = .0000001
             else:
                 abs = np.linalg.norm(own_vel)*np.linalg.norm(target_vec)
             dot_prod_vp = np.dot(own_vel, target_vec)/abs
 
-            rewards[k] = 3.3*dot_prod_vp - 1.0 * N_k
+            rewards[k] = dot_prod_vp - 1.0 * N_k
         return rewards
 
 
