@@ -49,7 +49,7 @@ if __name__ == "__main__":
         .update_from_dict({"model":{"fcnet_hiddens": [64,64],}})
         #.resources(num_gpus=int(os.environ.get("RLLIB_NUM_GPUS", "0")))
         .resources(num_gpus=1)
-        .rollouts(num_rollout_workers=6)
+        .rollouts(num_rollout_workers=1)
     )
 
     stop = {
@@ -64,9 +64,6 @@ if __name__ == "__main__":
         param_space=config.to_dict(),
         run_config=air.RunConfig(stop=stop, verbose=1, checkpoint_config=CheckpointConfig(num_to_keep=1))
     ).fit()
-
-
-
 
     ray.shutdown()
 

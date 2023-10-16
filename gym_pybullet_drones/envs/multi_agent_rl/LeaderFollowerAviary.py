@@ -10,6 +10,7 @@ class LeaderFollowerAviary(BaseMultiagentAviary):
     ################################################################################
 
     def __init__(self,
+                 conf=None,
                  drone_model: DroneModel=DroneModel.CF2X,
                  num_drones: int=2,
                  neighbourhood_radius: float=np.inf,

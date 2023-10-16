@@ -4,6 +4,7 @@ from gym_pybullet_drones.envs.multi_agent_rl.CustomBaseMAA3 import CustomRl3
 import os
 import ray
 from ray.rllib.policy.policy import PolicySpec
+from gym_pybullet_drones.envs.multi_agent_rl.LeaderFollowerAviary import LeaderFollowerAviary
 
 ray.init(num_cpus=5)
 
@@ -26,10 +27,10 @@ def policy_mapping_fn(agent_id, episode, worker, **kwargs):
 algo = (
     PPOConfig()
     .rollouts(num_rollout_workers=1)
-    .update_from_dict({"model":{"fcnet_hiddens": [1],}})
+    .update_from_dict({"model":{"fcnet_hiddens": [64,64],}})
     .multi_agent(policies=policies, policy_mapping_fn=policy_mapping_fn)
     .resources(num_gpus=0)
-    .environment(env=CustomRl3)
+    .environment(env=LeaderFollowerAviary)
     .framework("torch")
     .training(num_sgd_iter=5)
     .resources(num_gpus=int(os.environ.get("RLLIB_NUM_GPUS", "0")))
