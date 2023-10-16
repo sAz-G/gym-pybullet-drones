@@ -953,11 +953,14 @@ class CustomBaseAviary(gym.Env):
             Ndarray containing the current RPMs input for each drone.
 
         """
-        if action == {}:
-            return
-        else:
-            for k in range(len(action.keys())):
-                self.last_action[k] = action[k]
+        try:
+            if action == {}:
+                return
+            else:
+                for k in range(len(action.keys())):
+                    self.last_action[k] = action[k]
+        except:
+            print("THE LAST ACTION IS ", action)
         #self.last_action = np.reshape(action, (self.NUM_DRONES, 4))
 
     ################################################################################

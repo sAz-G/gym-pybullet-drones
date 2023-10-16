@@ -6,10 +6,7 @@ import torch
 from gym_pybullet_drones.utils.utils import sync, str2bool
 from gym_pybullet_drones.utils.enums import DroneModel, Physics
 from gym_pybullet_drones.envs.multi_agent_rl.CustomBaseMAA3 import CustomRl3
-from gym_pybullet_drones.control.DSLPIDControl import DSLPIDControl
-from gym_pybullet_drones.utils.Logger import Logger
 from ray.rllib.policy.policy import Policy
-from ray.rllib.algorithms.ppo import PPOTorchPolicy
 
 
 DEFAULT_DRONE = DroneModel('cf2x')
@@ -18,23 +15,34 @@ DEFAULT_RECORD_VIDEO = False
 DEFAULT_SIMULATION_FREQ_HZ = 240
 DEFAULT_CONTROL_FREQ_HZ = 48
 DEFAULT_DURATION_SEC = 10
+
 DEFAULT_OUTPUT_FOLDER = 'results'
 DEFAULT_COLAB = False
 
+# initial_positions =  np.array([
+#     [1.0, -2.4492935982947064e-16, 1.0],
+#     [0.8090169943749476, 0.9877852522924729, 1.0],
+#     [-1.0, 1.2246467991473532e-16, 1.0],
+#     [-0.8090169943749475, -0.987785252292473, 1.0],
+#     ])
+#
+# set_of_targets = np.array([
+#     [-1.0, 1.2246467991473532e-16, 1.0],
+#     [-0.8090169943749475, -0.987785252292473, 1.0],
+#     [1.0, -2.4492935982947064e-16, 1.0],
+#     [0.8090169943749476, 0.9877852522924729, 1.0],
+#     ])
+
+
 initial_positions =  np.array([
-    [1.0, -2.4492935982947064e-16, 1.0],
-    [0.8090169943749476, 0.9877852522924729, 1.0],
-    [-1.0, 1.2246467991473532e-16, 1.0],
-    [-0.8090169943749475, -0.987785252292473, 1.0],
+    [2.0, 0, 1.0],
+    [0, 2.0, 1.0]
     ])
 
 set_of_targets = np.array([
-    [-1.0, 1.2246467991473532e-16, 1.0],
-    [-0.8090169943749475, -0.987785252292473, 1.0],
-    [1.0, -2.4492935982947064e-16, 1.0],
-    [0.8090169943749476, 0.9877852522924729, 1.0],
+    [1.0,0, 1.0],
+    [.0, 1.0,1.0]
     ])
-
 
 def run(
         drone=DEFAULT_DRONE,
@@ -47,15 +55,18 @@ def run(
         plot=True,
         colab=DEFAULT_COLAB
     ):
+
+    num_drones = 2
     env = CustomRl3(
-                        num_drones=4,
+                        num_drones=num_drones,
                         set_of_positions=initial_positions,
                         set_of_targets=set_of_targets,
                         gui=True
                      )
 
 
-    action = {k : np.zeros(4) for k in range(4)}
+    action = {k : np.zeros(4) for k in range(num_drones)}
+
 
     checkpoint_path = "/home/saz/GitHub/gym-pybullet-drones/gym_pybullet_drones/examples/thesis/PPO/PPO_CustomRl3_7e8c4_00000_0_2023-09-29_14-19-53/checkpoint_000015/policies/policy_0"
     policy = Policy.from_checkpoint(checkpoint_path)
@@ -66,10 +77,9 @@ def run(
         #### Step the simulation ###################################
         obs, reward, terminated, truncated, info = env.step(action)
 
-        for k in range(4):
+        for k in range(num_drones):
             obs_temp = obs[k]
             action_temp = policy.compute_single_action(obs_temp)
-            #print( action_temp)
             action_temp =  np.abs(action_temp[0])
             action[k] = action_temp
         #### Printout ##############################################
@@ -103,3 +113,4 @@ if __name__ == '__main__':
         print("2",wghts['encoder.actor_encoder.net.mlp.2.weight'].shape)
         print("pi 0",wghts['pi.net.mlp.0.weight'].shape)
         #print(wghts.keys())
+
